@@ -1,17 +1,18 @@
-import { useState, useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Link } from "react-router-dom";
-import BtbLogo from "./Logo";
+import { useEffect, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { Link, useNavigate } from "react-router-dom";
 import {
+  defaultFormValues,
   invoiceSchema,
   type InvoiceFormData,
-  defaultFormValues,
-  CURRENCIES,
 } from "../types/invoice";
+import BtbLogo from "./Logo";
+import { apiService } from "../services/api";
 
 const CreateInvoiceForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const {
     register,
@@ -141,12 +142,77 @@ const CreateInvoiceForm = () => {
   const onSubmit = async (data: InvoiceFormData) => {
     setIsSubmitting(true);
 
-    console.log("Form submitted with data:", data);
-    // Simulate API call success
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
-    alert("Invoice created successfully! (API call simulated)");
-    // navigate("/"); // Uncomment to redirect after simulated submission
+    try {
+      // Check authentication
+      if (!apiService.isAuthenticated()) {
+        navigate("/");
+        return;
+      }
+
+      // Transform form data to API format
+      const apiData = {
+        invoiceNumber: data.invoiceNumber || "",
+        invoiceTo: data.invoiceTo || "",
+        customer: data.customer || "",
+        company: data.company || "",
+        address: data.address || "",
+        phone: data.phone?.filter((p) => p?.trim()) || [],
+        email: data.email?.filter((e) => e?.trim()) || [],
+        hotelName: data.hotelName || "",
+        hotelAddress: data.hotelAddress || "",
+        hotelPhone: data.hotelPhone || "",
+        checkInDate: data.checkInDate || "",
+        checkOutDate: data.checkOutDate || "",
+        modificationDate: data.modificationDate || "",
+        remainingBalanceDue: data.remainingBalanceDue || "",
+        taxInPrecent: parseFloat(data.taxInPercent || "0"),
+        totalRooms: parseInt(data.totalRooms || "0"),
+        totalNights:
+          data.table?.reduce((sum, room) => sum + (room.nights || 0), 0) || 0,
+        collectedAmount: parseFloat(data.collectedAmount?.toString() || "0"),
+        refundAmount: 0,
+        penaltyFees: parseFloat(data.penaltyFees || "0"),
+        penaltyFeesName: "Penalty Fee",
+        currency: data.currency || "USD",
+        referenceNumber: data.referenceNumber || "",
+        attrition: data.attrition || "",
+        cancellation: data.cancellation || "",
+        cutOffDate: data.cutOffDate || "",
+        hotelCheckOut: data.checkOutDate || "",
+        hotelCheckIn: data.checkInDate || "",
+        numberOfAdults: 1,
+        creditCard: "",
+        deposit: false,
+        table:
+          data.table?.map((room) => ({
+            nights: room.nights || 1,
+            average: room.averagePrice || 0,
+            guestName: room.guestName || "",
+            checkInDate: room.checkInDate || "",
+            checkOutDate: room.checkOutDate || "",
+            smoking: room.smoking || "Non-smoking",
+            breakfast: room.breakfast || false,
+            roomType: room.roomType || "",
+            bedType: room.bedType || "",
+            extras: room.extras || "",
+          })) || [],
+      };
+
+      const result = await apiService.createInvoice(apiData);
+      alert("Invoice created successfully!");
+
+      // Redirect to the created invoice detail page
+      if (result._id) {
+        navigate(`/reservation/${result._id}`);
+      } else {
+        navigate("/home");
+      }
+    } catch (err) {
+      console.error("Error creating invoice:", err);
+      alert(err instanceof Error ? err.message : "Failed to create invoice");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Helper function to add a new phone/email field
@@ -1302,7 +1368,7 @@ const CreateInvoiceForm = () => {
             {/* Form Actions */}
             <div className="flex flex-col sm:flex-row justify-end gap-4 pt-6 border-t border-gray-200 mt-8">
               <Link
-                to="/"
+                to="/home"
                 className="inline-flex justify-center items-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
               >
                 <svg

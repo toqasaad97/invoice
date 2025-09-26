@@ -7,11 +7,11 @@ import {
   useLocation,
 } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import BusinessReservationConfirmation from "./components/BusinessReservationConfirmation";
+import InvoiceDetailPage from "./pages/InvoiceDetailPage";
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
 import CreateInvoiceForm from "./components/CreateInvoiceForm";
-import EditInvoiceForm from "./components/EditInvoiceForm";
+import EditInvoicePageForm from "./pages/EditInvoicePageForm";
 // Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
   const isAuthenticated = localStorage.getItem("isAuthenticated");
@@ -59,11 +59,10 @@ function App() {
             }
           />
           <Route
-            // path="/reservation/:id"
-            path="/reservation"
+            path="/reservation/:id"
             element={
               <ProtectedRoute>
-                <BusinessReservationConfirmation />
+                <InvoiceDetailPage />
               </ProtectedRoute>
             }
           />
@@ -77,11 +76,10 @@ function App() {
             }
           />
           <Route
-            // path="/edit/:id"
-            path="/edit"
+            path="/edit/:id"
             element={
               <ProtectedRoute>
-                <EditInvoiceForm />
+                <EditInvoicePageForm />
               </ProtectedRoute>
             }
           />

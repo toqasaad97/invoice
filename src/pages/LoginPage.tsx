@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BtbLogo from "../components/Logo";
+import { apiService } from "../services/api";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("password");
+  const [username, setUsername] = useState("i_love_dbms");
+  const [password, setPassword] = useState(
+    "database_management_systemhSP!9L!5g84gL"
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -29,17 +32,27 @@ export default function LoginPage() {
     setIsLoading(true);
     setError("");
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const result = await apiService.login({
+        userName: username,
+        password: password,
+      });
 
-    if (username === "admin" && password === "password") {
-      localStorage.setItem("isAuthenticated", "true");
-      console.log("Login successful! (Simulated)");
-      navigate("/home", { replace: true });
-    } else {
-      setError("Invalid username or password (Simulated)");
+      if (result.token) {
+        localStorage.setItem("isAuthenticated", "true");
+        console.log("Login successful!");
+        navigate("/home", { replace: true });
+      } else {
+        setError(result.message || "Login failed");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError(
+        err instanceof Error ? err.message : "Login failed. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
